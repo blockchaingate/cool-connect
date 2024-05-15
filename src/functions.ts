@@ -8,7 +8,7 @@ let socket: WebSocketSubject<any> | null = null;
 export function createConnection(deviceId: string): Observable<any> {
     console.log("Creating connection... with device id: ", deviceId);
     
-    const dp = "wss://testapi.fundark.com/ws/paycool@D72D205F-43E4-41E2-8412-60E13ACF8A03";
+    const dp = "wss://api.pay.cool/ws/paycool@"+ deviceId;
     
     return new Observable<any>((observer) => {
          socket = new WebSocketSubject(dp);
