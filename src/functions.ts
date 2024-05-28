@@ -1,8 +1,9 @@
-import { Observable } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/webSocket'; 
 
 
-let socket: WebSocketSubject<any> | null = null; 
+let socket: WebSocketSubject<any> | undefined;
+
 
 
 export function createConnection(deviceId: string): Observable<any> {
@@ -10,10 +11,12 @@ export function createConnection(deviceId: string): Observable<any> {
     
     const dp = "wss://api.pay.cool/ws/paycool@"+ deviceId;
     
-    return new Observable<any>((observer) => {
-         socket = new WebSocketSubject(dp);
-        
-        socket.subscribe({
+    return new Observable<any>((observer: Observer<any>) => {
+        if (!socket || socket.closed) {
+            socket = new WebSocketSubject(dp);
+        }
+
+        const subscription = socket.subscribe({
             next: (data: any) => {
                 const result = JSON.stringify(data);
                 observer.next(result); 
@@ -26,6 +29,14 @@ export function createConnection(deviceId: string): Observable<any> {
             }
         });
 
+        // Clean up resources when the subscription is unsubscribed
+        return () => {
+            subscription.unsubscribe();
+            // Close the WebSocket if there are no more subscribers
+            if (socket && socket.observers.length === 0) {
+                socket.complete();
+            }
+        };
     });
 }
 
@@ -51,11 +62,11 @@ export function send(data: any): void {
 }
 
 export function isConnected(): boolean {
-    return socket !== null && !socket.closed; 
+    return socket !== null && !socket!.closed; 
 }
 
 export function getSocket(): WebSocketSubject<any> | null {
-    return socket; 
+    return socket!; 
 }
 
 
